@@ -223,6 +223,7 @@ export default function RevealPage() {
                 </Link>
               </div>
             )}
+            
 
           {/* Confessions grid */}
           {!loadingConfessions &&
