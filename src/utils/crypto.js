@@ -73,6 +73,35 @@ export async function importPrivateKey(base64Key) {
   );
 }
 
+/**
+ * Ensure a private key exists. If not, generate a new pair and return the public key for syncing.
+ * Returns { privateKey, publicKey, isNew }
+ */
+export async function ensureKeyPair() {
+  if (hasPrivateKey()) {
+    const stored = getStoredPrivateKey();
+    try {
+      const privateKey = await importPrivateKey(stored);
+      return { privateKey, publicKey: null, isNew: false };
+    } catch (e) {
+      console.warn("Stored private key is invalid, regenerating...", e);
+      // Fall through to generate new key
+    }
+  }
+
+  const keyPair = await generateKeyPair();
+  const privateKeyBase64 = await exportPrivateKey(keyPair.privateKey);
+  const publicKeyBase64 = await exportPublicKey(keyPair.publicKey);
+
+  storePrivateKey(privateKeyBase64);
+
+  return {
+    privateKey: keyPair.privateKey,
+    publicKey: publicKeyBase64,
+    isNew: true,
+  };
+}
+
 // ============ HYBRID ENCRYPTION ============
 
 /**

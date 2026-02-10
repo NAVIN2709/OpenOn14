@@ -2,15 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { auth, googleProvider } from "../services/firebase";
 import { createUserProfile, getUserProfile } from "../services/firestore";
-import {
-  generateKeyPair,
-  exportPublicKey,
-  exportPrivateKey,
-  storePrivateKey,
-  getStoredPrivateKey,
-  hasPrivateKey,
-  importPrivateKey,
-} from "../utils/crypto";
+import { ensureKeyPair, hasPrivateKey } from "../utils/crypto";
 
 const AuthContext = createContext(null);
 
@@ -24,15 +16,22 @@ export function AuthProvider({ children }) {
       if (firebaseUser) {
         setUser(firebaseUser);
 
-        // Check if user has stored private key
-        const storedKey = getStoredPrivateKey();
-        if (storedKey) {
-          try {
-            const importedKey = await importPrivateKey(storedKey);
-            setPrivateKey(importedKey);
-          } catch (error) {
-            console.error("Failed to import private key:", error);
+        // Ensure we have a key pair, generating one if missing
+        try {
+          const { privateKey: key, publicKey, isNew } = await ensureKeyPair();
+          setPrivateKey(key);
+
+          if (isNew) {
+            // If we generated a new key, update the public key in Firestore
+            await createUserProfile(
+              firebaseUser.uid,
+              publicKey,
+              firebaseUser.displayName,
+              firebaseUser.photoURL,
+            );
           }
+        } catch (error) {
+          console.error("Failed to ensure key pair:", error);
         }
       } else {
         setUser(null);
@@ -54,31 +53,33 @@ export function AuthProvider({ children }) {
 
       if (!existingProfile) {
         // New user - generate key pair
-        const keyPair = await generateKeyPair();
-        const publicKeyBase64 = await exportPublicKey(keyPair.publicKey);
-        const privateKeyBase64 = await exportPrivateKey(keyPair.privateKey);
+        const { privateKey: key, publicKey } = await ensureKeyPair();
 
         // Store public key in Firestore
         await createUserProfile(
           firebaseUser.uid,
-          publicKeyBase64,
+          publicKey,
           firebaseUser.displayName,
           firebaseUser.photoURL,
         );
 
-        // Store private key locally
-        storePrivateKey(privateKeyBase64);
-        setPrivateKey(keyPair.privateKey);
-      } else if (!hasPrivateKey()) {
-        // Existing user but no local private key - they've lost access
-        console.warn(
-          "User exists but private key is missing. Messages cannot be decrypted.",
-        );
+        setPrivateKey(key);
       } else {
-        // Existing user with private key
-        const storedKey = getStoredPrivateKey();
-        const importedKey = await importPrivateKey(storedKey);
-        setPrivateKey(importedKey);
+        // Existing user: ensure we have keys (regenerate if missing)
+        const { privateKey: key, publicKey, isNew } = await ensureKeyPair();
+        setPrivateKey(key);
+
+        if (isNew) {
+          console.warn(
+            "Private key was missing. Generated new pair and updating public key.",
+          );
+          await createUserProfile(
+            firebaseUser.uid,
+            publicKey,
+            firebaseUser.displayName,
+            firebaseUser.photoURL,
+          );
+        }
       }
 
       return firebaseUser;
