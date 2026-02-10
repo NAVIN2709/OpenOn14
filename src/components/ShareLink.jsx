@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link2, Copy, Check, Share2 } from "lucide-react";
 
-export default function ShareLink({ userId }) {
+export default function ShareLink({ userId, userName }) {
   const [copied, setCopied] = useState(false);
 
-  const confessionUrl = `${window.location.origin}/confess/${userId}`;
+  const confessionUrl = `${window.location.origin}/confess/${userId}${
+    userName ? `?name=${encodeURIComponent(userName)}` : ""
+  }`;
 
   // Shortened display URL for mobile
   const displayUrl =

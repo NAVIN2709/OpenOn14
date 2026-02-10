@@ -106,7 +106,7 @@ export default function Dashboard() {
 
           {/* Share Link Card */}
           <div className="mb-4 sm:mb-8">
-            <ShareLink userId={user.uid} />
+            <ShareLink userId={user.uid} userName={user.displayName} />
           </div>
 
           {/* Confession Count Card */}
