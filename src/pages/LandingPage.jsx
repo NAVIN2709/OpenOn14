@@ -129,9 +129,12 @@ export default function LandingPage() {
           </button>
 
           {/* Security note */}
-          <p className="mt-6 text-sm text-gray-400 flex items-center justify-center gap-2">
-            <Lock className="w-4 h-4 -mt-4" />
-            Your confessions are encrypted. Only you can read them.
+          <p className="mt-6 text-base text-gray-400 flex flex-col items-center justify-center gap-2">
+            <div className="text flex">
+              <Lock className="w-5 h-5 mr-1" />
+            <p className="text">Your confessions are encrypted.</p>
+            </div>
+            <p className="sub -mt-1 text-sm">Only you can read them.</p>
           </p>
           <p className="author text-sm text-gray-400 mt-2">Made with ❤️ by Navin</p>
         </div>
