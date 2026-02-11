@@ -4,6 +4,7 @@ import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
 import ConfessPage from "./pages/ConfessPage";
 import RevealPage from "./pages/RevealPage";
+import OpenInBrowser from "./pages/OpenInBrowser";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/confess/:userId" element={<ConfessPage />} />
           <Route path="/reveal" element={<RevealPage />} />
+          <Route path="/open" element={<OpenInBrowser />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
